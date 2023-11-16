@@ -1,4 +1,4 @@
-let alienImage;  // 23 * 16
+let alienImage; 
 let invaders;
 let shooterImage;
 let player;
@@ -8,27 +8,22 @@ let canvas;
 let canvasEl;
 let loading = 10;
 let loadingPlus = true;
+let resumeButton;
+let upgradedShooterImage;
 
-// how hard do you want to make it? :D
-const NUM_DEBRIS = 25;
-
-// const provider = passport.connectEvm();
-// const accounts = await provider.request({ method: "eth_requestAccounts" });
+const NUM_DEBRIS = 5; // number of space debris
 
 function preload() {
   alienImage = loadImage("invader1.png");
   shooterImage = loadImage('player.png');
-  // shooterImage = loadImage('stackship.svg');
+  upgradedShooterImage = loadImage('playerv2.png');
 }
 
 function setup() {
   canvasEl = document.getElementById('sketch-holder')
   canvas = createCanvas(canvasEl.offsetWidth, 400);
   canvas.style('display', 'block');
-  // noStroke();
-  // rectMode(CENTER);
   canvas.parent('sketch-holder');
-  // createCanvas(window.innerWidth * 0.9, window.innerHeight * 0.9);
   invaders = new Invaders(alienImage, 4);
   player = new Player(shooterImage);
 
@@ -38,13 +33,19 @@ function setup() {
       allDebris.push(new Debris());
     }
   }
+
+  // Create the resume game button but hide it initially
+  resumeButton = createButton('Resume Game');
+  resumeButton.position(width / 2 - 40, height / 2 + 220);
+  resumeButton.mousePressed(resumeGame);
+  resumeButton.hide();
 }
 
 function showGameOver() {
   background(0);
   gameOver = true;
   fill(255);
-  let gameOverT = "GAME OVER! click to continue. Your score was " + player.score;
+  let gameOverT = "GAME OVER! Click to continue. Your score was " + player.score;
   textSize(16);
   text(gameOverT, width / 2 - textWidth(gameOverT) / 2, height / 2);
 }
@@ -53,48 +54,73 @@ function connectToStart() {
   background(100);
   fill(255);
   textSize(16);
-  let startText = "GAME will start after succesfully authenticating. Click on Connect passport"
-  let textXpos = width / 2 - textWidth(startText) / 2
+  let startText1 = "Game will start after successful authentication";
+  let startText2 = "Click on Connect passport";
+  let textXpos1 = width / 2 - textWidth(startText1) / 2;
+  let textXpos2 = width / 2 - textWidth(startText2) / 2;
+  let textYpos = height / 2;
 
-  if (window.siconnecting) {
-    startText = "Connecting ..."
-    textXpos = width / 2 - textWidth(startText) / 2
+  if (window.isconnecting) {
+    startText1 = "Connecting ...";
+    textXpos1 = width / 2 - textWidth(startText1) / 2;
     if (loadingPlus === true && loading == 100) {
-      loadingPlus = false
+      loadingPlus = false;
     } else if (loading == 10 && loadingPlus === false) {
-      loadingPlus = true
+      loadingPlus = true;
     }
     if (loadingPlus) {
       loading++;
     } else {
       loading--;
     }
-    fill(loading + 150)
+    fill(loading + 150);
   }
-  text(startText, textXpos, height / 2);
+
+  text(startText1, textXpos1, textYpos);
+  text(startText2, textXpos2, textYpos + 20);
+}
+
+function resumeGame() {
+  console.log('Resuming game, hiding resume button');
+  player.resumeGame();
+  resumeButton.hide();
+  loop(); 
+  let nft = document.getElementById("nft");
+  nft.innerHTML = ""
 }
 
 function draw() {
-  if (window?.userProfile?.email) {
-    document.getElementById('btn-passport').hidden = true;
-    document.getElementById('btn-logout').hidden = false;
-    background(0);
-    player.update();
+  if (gameOver) {
+    showGameOver();
+  } else if (window?.userProfile?.email) {
+    if (!player.gamePaused) {
+      background(0);
+      player.update();
+      updateDebrisAndCheckCollisions();
+      invaders.update(player);
+    }
+
     player.draw();
     player.drawInfo();
-    // player.drawLives();
-    updateDebrisAndCheckCollisions();
-    invaders.update(player);
     invaders.draw();
+    
+    // Check if the game needs to be paused
+    if (player.gamePaused && resumeButton.elt.style.display=== 'none') {
+      console.log('Pausing game, showing resume button');
+      noLoop();
+      resumeButton.show();
+    }
+    
     if (player.lives == 0) {
-      showGameOver();
+      gameOver = true;
     }
   } else {
     connectToStart();
-    document.getElementById('btn-passport').hidden = false;
-    document.getElementById('btn-logout').hidden = true;
-
   }
+
+  // Update button visibility based on authentication status
+  document.getElementById('btn-passport').hidden = window?.userProfile?.email;
+  document.getElementById('btn-logout').hidden = !window?.userProfile?.email;
 }
 
 function mousePressed() {
@@ -127,15 +153,26 @@ function updateDebrisAndCheckCollisions() {
 
     if (allDebris[i].hasHitPlayer(player)) {
       allDebris.splice(i, 1);
-      player.loseLive();
+      player.loseLife();
       break;
     }
   }
 }
 function windowResized() {
-  // centerCanvas();
   resizeCanvas(canvasEl.offsetWidth, 400)
   background(0)
 }
 
+/* window.addEventListener('upgradeSpaceship', function(e) {
+  console.log('Spaceship upgrade event received:', e.detail.transactionHash);
+  if (player) {
+      player.upgradeSpaceship();
+  }
+}); */
 
+/* window.addEventListener('onLevel2BadgeFound', function(e) {
+  console.log('Level 2 Badge event received:', e.detail);
+  if (player) {
+      player.upgradeSpaceship();
+  }
+}); */

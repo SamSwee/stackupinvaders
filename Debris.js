@@ -1,13 +1,10 @@
 class Debris {
-
-  
     constructor() {
       this.r = 5;
       this.resetDebris();
     }
     
     resetDebris() {
-        
       this.y = random(height - 10);
       this.r = random(5,10)
       
@@ -20,12 +17,10 @@ class Debris {
           this.x = random(width, width * 2);
         this.isGoingLeft = true;
       }
-      
-      
     }
     
     update() {
-        if (this.isGoingLeft) {
+      if (this.isGoingLeft) {
           this.x --;
       } else {
           this.x ++;
@@ -35,7 +30,6 @@ class Debris {
           this.resetDebris();
       }
     }
-    
     
     isOffScreen() {
       if (this.isGoingLeft && this.x < -5) {
@@ -53,12 +47,10 @@ class Debris {
     }
     
     hasHitPlayer(player) {
-      // console.log("hit player", dist(this.x, this.y, player.x, player.y), this.r + 10)
         if (dist(this.x, this.y, player.x, player.y) < this.r + player.r) {
           return true;
       }
       return false
     }
-  
   }
   

@@ -3,6 +3,7 @@ class AlienBullet extends Bullet {
         super(x, y);
         this.r = 2;
     }
+    
     update() {
         this.y += 2;
     }
